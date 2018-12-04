@@ -84,6 +84,7 @@ class Bot extends EventEmitter {
    * @return {String} the payload's channel
    */
   getChannel(payload) {
+
     debug('getChannel %j', payload)
     let event = payload.event
 
@@ -236,30 +237,36 @@ class Bot extends EventEmitter {
    * @param {Object} payload - The payload
    * @return {Promise} A promise with the events that were notified
    */
-  dispatch(payload) {
-    debug('dispatch %j', payload)
+  dispatch(payload, context) {
+      debug('dispatch %j', payload)
 
-    // ignore bots
-    if (payload.bot_id || (payload.event && payload.event.bot_id)) return
+      // ignore bots
+      if (payload.bot_id || (payload.event && payload.event.bot_id)) return
 
-    let events = ['*']
+      let events = ['*']
 
-    // notify incoming message by type
-    if (payload.type) events.push(payload.type)
+      // notify incoming message by type
+      //if (payload.type) events.push(payload.type)
 
-    // notify event triggered by event type
-    if (payload.event) events.push('event', payload.event.type)
+      // notify event triggered by event type
+      if (payload.event) events.push('event', payload.event.type)
 
-    // notify slash command by command
-    if (payload.command) events.push('slash_command', payload.command)
+      if(payload.command === '/movie') events.push('movie', payload)
+      //if(payload.command === '/greetings_click') events.push('greet', payload)
 
-    // notify webhook triggered by trigger word
-    if (payload.trigger_word) events.push('webhook', payload.trigger_word)
+      // notify webhook triggered by trigger word
+      if (payload.trigger_word) events.push('webhook', payload.trigger_word)
 
-    // notify message button triggered by callback_id
-    if (payload.callback_id) events.push('interactive_message', payload.callback_id)
+      // notify message button triggered by callback_id
+      if (payload.callback_id === 'genre_click') events.push('genre_click', payload)
 
-    events.forEach(name => this.emit(name, payload, this))
+      let eventsPromises = events.map(name => this.emit(name, payload, this))
+
+      return Promise.all(eventsPromises).then(() => {
+          context.succeed(payload.challenge);
+      }).catch((err) => {
+          context.fail(err);
+      });
   }
 }
 

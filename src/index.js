@@ -1,4 +1,14 @@
 'use strict'
+const thundra = require("@thundra/core")({
+    apiKey: /* Get Your Thundra ApiKey from https://console.thundra.io/signup */,
+    traceConfig: {
+        traceableConfigs: [{
+            pattern: '*.*',
+            traceArgs: true,
+            traceReturnValue: true,
+            traceError: true
+        }],
+    } });
 
 const
   INSTALL_REDIRECT = process.env.INSTALL_REDIRECT,
@@ -11,7 +21,6 @@ const
   aws = require('./aws'),
   Bot = require('./bot')
 
-
 /**
  * Lambda handler
  *
@@ -19,14 +28,14 @@ const
  * @param {Object} context - The Lambda context
  * @param {Function} callback - The Lambda callback
  */
-exports.handler = function(event, context, callback) {
+exports.handler = thundra((event, context, callback) => {
   debug('handler:event %j', event)
   debug('handler:context %j', context)
 
   if (event.method === "GET") install(event.query || {}, context)
   if (event.method === "POST") receive(event.body || {}, context)
   if (event.Records) execute(JSON.parse(event.Records[0].Sns.Message), context)
-}
+})
 
 
 /**
@@ -83,9 +92,13 @@ function receive(payload, context) {
 
   // Create SNS notification
   let notify = store => {
-    let scripts = require('../scripts.json')
-    let notifications = scripts.map(script => aws.notify({ script, store, payload }))
-    return Promise.all(notifications)
+      let scripts = require('../scripts.json')
+      let notifications = scripts.map(script => aws.notify({ script, store, payload }))
+      return Promise.all(notifications).then(() => {
+          context.succeed(payload.challenge);
+      }).catch((err) => {
+          context.fail(err);
+      });
   }
 
   // Create an error message
@@ -109,5 +122,5 @@ function execute(event, context) {
 
   let bot = new Bot(event.store)
   require(event.script)(bot)
-  bot.dispatch(event.payload)
+  bot.dispatch(event.payload, context)
 }

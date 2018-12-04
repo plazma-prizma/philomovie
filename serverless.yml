@@ -26,22 +26,22 @@ custom:
 
   slack:
     # Verification token
-    verification_token: "xxxxxxxxxxxxxxx"
+    verification_token: "ofFzHmwWwYtLtHUNFVzLeBr3"
     
     # Space delimited scopes
     client_scopes: "bot commands"
     
     # Client ID - quotes required
-    client_id: "xxxxxxxxxxxxxxxxxx"
+    client_id: "295482446434.483290380353"
     
     # Client Secret - quotes required
-    client_secret: "xxxxxxxxxxxxxxxxxx"
+    client_secret: "2dfa1c0defc1b9027bfe65ebf8ec85f4"
 
 
 provider:
   name: aws
-  runtime: nodejs4.3
-  profile: serverless
+  runtime: nodejs6.10
+  profile: doguscan
   versionFunctions: false
   iamRoleStatements:    
     - Effect: Allow
